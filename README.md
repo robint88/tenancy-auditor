@@ -33,7 +33,6 @@ git clone [https://github.com/YOUR_USERNAME/lando-auditor.git](https://github.co
 cd lando-auditor
 
 ### 2. Install Dependencies
-Bash
 pip install -r requirements.txt
 
 ### 3. Environment Secrets
@@ -41,6 +40,7 @@ Create a .env file in the root directory:
 
 ## Code snippet
 google_api=your_gemini_api_key_here
+
 flask_secret=your_random_secret_string
 ### 4. Launch Lando
 python app.py
