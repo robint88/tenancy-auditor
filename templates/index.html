@@ -8,6 +8,54 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   </head>
   <body class="bg-slate-200">
+    <div
+      id="loading-overlay"
+      class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center bg-blue-950/90 backdrop-blur-md"
+    >
+      <div class="relative">
+        <div
+          class="absolute inset-0 rounded-full bg-indigo-500 blur-2xl opacity-40 animate-pulse"
+        ></div>
+        <div
+          class="relative bg-white p-8 rounded-full shadow-2xl animate-bounce"
+        >
+          <span class="text-6xl">🐕</span>
+        </div>
+      </div>
+
+      <h2 class="mt-10 text-3xl font-bold text-white tracking-tight">
+        Lando is sniffing...
+      </h2>
+      <p class="mt-2 text-indigo-200 animate-pulse text-lg">
+        Analyzing clauses against the 2026 Act
+      </p>
+
+      <div
+        class="mt-8 w-72 h-2 bg-blue-900/50 rounded-full overflow-hidden border border-indigo-500/30"
+      >
+        <div
+          class="h-full bg-gradient-to-r from-indigo-600 to-indigo-400 animate-[sniff_2s_ease-in-out_infinite]"
+        ></div>
+      </div>
+    </div>
+
+    <style>
+      /* Custom animation for the progress bar "sniffing" back and forth */
+      @keyframes sniff {
+        0% {
+          width: 10%;
+          margin-left: 0%;
+        }
+        50% {
+          width: 40%;
+          margin-left: 30%;
+        }
+        100% {
+          width: 10%;
+          margin-left: 90%;
+        }
+      }
+    </style>
     <div class="bg-blue-950">
       <header class="absolute inset-x-0 top-0 z-50">
         <nav
@@ -258,7 +306,10 @@
                     name="file"
                     type="file"
                     class="sr-only"
-                    onchange="document.getElementById('upload-form').submit()"
+                    onchange="
+                      showLando();
+                      document.getElementById('upload-form').submit();
+                    "
                   />
                 </label>
                 <p class="pl-1">or drag and drop your tenancy</p>
@@ -690,5 +741,15 @@
         </p>
       </div>
     </footer>
+    <script>
+      function showLando() {
+        const overlay = document.getElementById("loading-overlay");
+        if (overlay) {
+          // Remove hidden and add flex to make it visible
+          overlay.classList.remove("hidden");
+          overlay.classList.add("flex");
+        }
+      }
+    </script>
   </body>
 </html>
