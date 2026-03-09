@@ -1,5 +1,6 @@
 flask
 google-genai
 python-dotenv
-xhtml2pdf
 gunicorn
+xhtml2pdf
+python-bidi==0.4.2
