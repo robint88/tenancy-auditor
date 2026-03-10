@@ -4,3 +4,5 @@ python-dotenv
 gunicorn
 xhtml2pdf
 python-bidi==0.4.2
+stripe
+Werkzeug
