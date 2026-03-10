@@ -121,4 +121,7 @@ def download_pdf():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # 1. Get the port Render assigned to you
+    port = int(os.environ.get("PORT", 5000))
+    # 2. Bind to 0.0.0.0 so the public URL can reach the app
+    app.run(host="0.0.0.0", port=port)
