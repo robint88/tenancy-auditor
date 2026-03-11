@@ -21,6 +21,7 @@
     </nav>
 
     <main class="max-w-4xl mx-auto py-12 px-6">
+        
       <div class="mb-10 text-center">
         <h1 class="text-3xl font-bold text-blue-950 sm:text-5xl">
           LANDO Audit Report
@@ -36,6 +37,19 @@
         <div class="bg-blue-950 px-8 py-4 flex items-center gap-x-3">
           <span class="text-2xl">🔍</span>
           <h2 class="text-white font-semibold text-lg">LANDO AI Analysis</h2>
+        </div>
+        <div class="mt-12 flex justify-center">
+        <div class="mt-12 flex justify-center">
+          <form action="/download-pdf" method="POST">
+            <input type="hidden" name="ai_result" value="{{ ai_result }}" />
+
+            <button
+              type="submit"
+              class="rounded-md bg-blue-950 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-900 transition-all"
+            >
+              Download PDF Report
+            </button>
+          </form>
         </div>
 
         <div class="p-8 lg:p-12">
