@@ -15,6 +15,8 @@ from dotenv import load_dotenv
 from io import BytesIO
 from xhtml2pdf import pisa
 import re
+import time
+import logging
 
 load_dotenv()
 app = Flask(__name__)
@@ -25,7 +27,32 @@ UPLOAD_FOLDER = "temp_uploads"
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-stripe.api_key = os.getenv("stripe_key_test")
+stripe.api_key = os.getenv("stripe_key")
+
+
+def get_audit_with_retry(file_bytes, max_retries=3):
+    """Retries the Gemini audit if the service is busy."""
+    for attempt in range(max_retries):
+        try:
+            analysis = get_audit_result(file_bytes)
+
+            # Check if Gemini returned a 'busy' string instead of a real audit
+            if "service too busy" in analysis.lower() or "503" in analysis:
+                raise Exception("Gemini reported busy")
+
+            return analysis  # Success!
+
+        except Exception as e:
+            if attempt < max_retries - 1:
+                # Wait longer each time: 2s, 4s, 8s...
+                sleep_time = 2 ** (attempt + 1)
+                logging.warning(
+                    f"Audit busy, retrying in {sleep_time}s... (Attempt {attempt + 1})"
+                )
+                time.sleep(sleep_time)
+            else:
+                # Final attempt failed
+                return "The legal audit service is currently experiencing high demand. Please refresh this page in a minute to try again."
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -67,26 +94,28 @@ def index():
 
 @app.route("/success")
 def success():
-    # 1. Get ID from session
     file_id = session.get("pending_file_id")
     if not file_id:
         return redirect(url_for("index"))
 
-    # 2. Find the file
     file_path = os.path.join(UPLOAD_FOLDER, f"{file_id}.pdf")
 
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
             file_bytes = f.read()
 
-        # 3. Run audit
-        analysis = get_audit_result(file_bytes)
+        # Use the retry helper instead of calling directly
+        analysis = get_audit_with_retry(file_bytes)
 
-        # 4. Delete file and clear session
-        os.remove(file_path)
-        session.pop("pending_file_id", None)
-
-        return render_template("results.html", ai_result=analysis)
+        # Only clear session and delete file if the audit worked
+        # (Assuming failed audit contains the 'High demand' message)
+        if "High demand" not in analysis:
+            os.remove(file_path)
+            session.pop("pending_file_id", None)
+            return render_template("results.html", ai_result=analysis)
+        else:
+            # If still failed after retries, show 'Try again' button
+            return f"<h3>{analysis}</h3><button onclick='location.reload()'>Retry Audit</button>"
 
     return "Error: Audit file expired or not found.", 404
 
@@ -95,9 +124,8 @@ def success():
 def download_pdf():
     ai_result_raw = request.form.get("ai_result")
 
-    # --- STEP 1: Convert string to structured data ---
-    # This uses regex to parse your AI output if it's a single string
-    # If your AI already returns JSON/dict, you can skip this step
+    # --- 1: Convert string to structured data ---
+    # Regex to parse AI output if a single string
     compliance_score_match = re.search(r"Compliance Score: (\d+)", ai_result_raw)
     summary_match = re.search(
         r"Summary: (.*?)Issues Identified:", ai_result_raw, re.DOTALL
@@ -144,7 +172,7 @@ def download_pdf():
         }
         issues.append(issue)
 
-    # --- STEP 2: Build the HTML ---
+    # --- 2: Build HTML ---
     issues_html = ""
     for issue in issues:
         severity_class = issue.get("Severity", "").lower()
@@ -222,13 +250,13 @@ def download_pdf():
         {issues_html}
 
         <div class="footer">
-            LEGAL NOTICE: This report was generated using AI. It is an informational audit only and does not constitute legal advice.
+            LEGAL NOTICE: This report was generated using AI. It is an informational audit only and does not constitute legal advice. LANDO is not a law firm.
         </div>
     </body>
     </html>
     """
 
-    # --- STEP 3: Generate PDF ---
+    # --- 3: Generate PDF ---
     buffer = BytesIO()
     pisa_status = pisa.CreatePDF(pdf_html, dest=buffer)
     if pisa_status.err:
@@ -243,8 +271,18 @@ def download_pdf():
     return response
 
 
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+
 if __name__ == "__main__":
-    # 1. Get the port Render assigned to you
+    # 1. Get the port Render assigned
     port = int(os.environ.get("PORT", 5000))
-    # 2. Bind to 0.0.0.0 so the public URL can reach the app
+    # 2. Bind to 0.0.0.0 so the public URL can reach app
     app.run(host="0.0.0.0", port=port)

@@ -14,7 +14,7 @@ def get_audit_result(file_bytes):
     ) = """
 You are an AI compliance auditor reviewing a UK residential tenancy agreement.
 
-Your task is to perform a structured compliance audit based ONLY on the key principles of the Renters' Rights Act 2026.
+Your task is to perform a structured compliance audit based ONLY on the key principles of the Renters' Rights Act 2026. You MUST look at each of the principles/rules stated.
 
 IMPORTANT:
 This is NOT legal advice. This is an informational compliance audit only.
@@ -25,7 +25,7 @@ Follow the instructions exactly.
 
 AUDIT RULES
 
-Check the document for the following potential issues:
+Check the document for the following potential issues and ensure you address each one:
 
 RULE 1 – Section 21 / No-Fault Eviction
 The Renters' Rights Act abolishes Section 21 no-fault evictions.
@@ -33,6 +33,7 @@ Flag if the agreement references:
 • "Section 21"
 • "no fault eviction"
 • landlord possession without grounds
+• landlord ability to end tenancy without reason
 
 RULE 2 – Fixed Term Tenancies
 Tenancy agreements should no longer create fixed-term tenancies.
@@ -40,12 +41,38 @@ Flag clauses suggesting:
 • fixed terms (e.g. "12 month term", "6 month term")
 • tenancy with a defined end date
 • renewal requirements after a fixed period
+• break clauses tied to a fixed term
 
 RULE 3 – Rent Increase Clauses
-Rent increases should generally occur no more than once per year.
+Rent increases should generally occur no more than once per year via the statutory process.
 Flag clauses that:
 • allow multiple increases per year
 • allow increases at landlord discretion without time limits
+• allow increases without a formal notice process
+
+RULE 4 – Rent in Advance Restrictions
+The Act restricts excessive rent in advance payments.
+
+Flag clauses that:
+• require multiple months of rent in advance
+• require large upfront rent payments beyond normal monthly rent
+• allow landlords to demand several months rent upfront as a condition of the tenancy
+
+RULE 5 – Tenant Notice / Right to Leave
+Tenants should be able to end periodic tenancies with two months' notice.
+
+Flag clauses that:
+• require tenants to give more than two months' notice
+• prevent tenants leaving except at the end of a fixed term
+• impose penalties for ending the tenancy with notice
+
+RULE 6 – Pet Restrictions
+The Act limits blanket bans on pets.
+
+Flag clauses that:
+• prohibit pets entirely
+• state "no pets allowed" without qualification
+• give landlords absolute discretion to refuse pets without justification
 
 --------------------------------------------------
 
@@ -69,14 +96,24 @@ Start with a score of 100.
 
 Apply the following deductions:
 
-Section 21 or no-fault eviction clause detected → -40
-Fixed term tenancy detected → -30
-Rent increase clause potentially non-compliant → -30
+Section 21 / No-fault eviction -> -40
+Fixed term tenancy -> -30
+Rent increase clause -> -15
+Tenant notice restriction -> -10
+Rent in advance requirement	-> -5
+Blanket pet ban	-> -5
 
 If multiple examples exist for the same rule, only deduct once.
 
-Minimum score = 0
+Minimum score = 0  
 Maximum score = 100
+
+Score Interpretation
+
+90–100 → Highly compliant
+70–89 → Minor compliance risks
+40–69 → Moderate compliance issues
+0–39 → High risk of non-compliance
 
 --------------------------------------------------
 
@@ -116,7 +153,6 @@ DISCLAIMER
 This report is an AI-generated compliance audit designed to highlight potential issues in light of the Renters' Rights Act 2026.
 
 It is NOT legal advice and should not replace review by a qualified solicitor or property law professional.
-
 """
 
     response = client.models.generate_content(
