@@ -82,6 +82,7 @@ def index():
                         }
                     ],
                     mode="payment",
+                    allow_promotion_codes=True,
                     success_url=url_for("success", _external=True),
                     cancel_url=url_for("index", _external=True),
                 )
